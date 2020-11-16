@@ -1,5 +1,6 @@
 # project1
-New school data to be available November 12
+
+UPDATE 11/15: most recent version is util2.R
 
 To adapt to your machine: set path for inputdata file, make sure you
 have the required packages, and ignore the warning messages
