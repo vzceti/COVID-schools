@@ -1,6 +1,6 @@
 # project1
 
-UPDATE 11/15: most recent version is util2.R
+UPDATE 11/15: most recent version is util2.R, input.R, and data2 files
 
 To adapt to your machine: set path for inputdata file, make sure you
 have the required packages, and ignore the warning messages
