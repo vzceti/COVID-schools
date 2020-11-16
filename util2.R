@@ -107,6 +107,7 @@ schooldata$date <- as.Date(schooldata$date)
 # clean up all obsolete data frames and vectors
 rm(list=setdiff(ls(), c("a", "schooldata")))
 
-# TIME FOR Feature engineering
+# TIME FOR feature engineering
+
 
 Sys.time()-a
