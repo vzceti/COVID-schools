@@ -10,6 +10,7 @@ TODO
 - Fix county order and Fairfax adding
 - Update documentation
 - Rework code to be as fungible as possible
+- Restore school data and find closest counties
 
 IN NYT DATA
 - Add Emporia city's cases and deaths to Greensville County's and keep Greensville County's, removing Emporia
