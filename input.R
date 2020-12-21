@@ -49,4 +49,8 @@ averages <- subset(averages, weekdays == "Sunday", -c(3,4,7,8))
 rownames(averages) <- c()
 # now you have the weekly seven-day averages
 
+remote <- ifelse(schooldata$status == 1,1,0)
+schooldata <- cbind(schooldata, remote)
+colnames(schooldata) <- c("county", "state", "status", "index", "remote")
+
 #bind the two together
