@@ -1,35 +1,48 @@
 # THUS BEGINS data cleaning and data wrangling... let's get this bread
 schooldata <- read.csv(inputdata)
-colnames(schooldata) <- c("divnum", "county", "date", "status", "specifics", "membership")
+startdate <- "2020-08-30"
+colnames(schooldata) <- c("divnum", "county", "date", "startstatus", "specifics", "membership")
 schooldata$date <- as.Date(schooldata$date, format = "%B %d")
 startdata <- subset(schooldata, date == "2020-09-08", -c(1,3,5,6))
-date <- rep(as.Date("2020-09-06"),length(startdata$county))
-startdata<- cbind(startdata,date)
 rownames(startdata) <- c()
-index <- rep(0,length(startdata$county))
-startdata <- cbind(startdata, index)
-# now you have the beginning status of each school district
+#start dates
+
+# tiny dataset for cartesian join
+t <- c(0:40)
+dates <- c(as.Date(startdate)+c(7*(0:40)))
+startweek <- rep(startdate,length(t))
+changedate <- c(rep("NULL",length(t)))
+tiny <- cbind(t,dates,startweek)
+tiny <- as.data.frame(tiny)
+tiny$dates <- as.double(tiny$dates)
+tiny$dates <- as.Date(tiny$dates)
+schooldata <- merge(startdata,tiny,all=TRUE)
 
 # change of status date
 changed <- read_excel(changes)
 changed <- changed[-c(2,5,6)]
-colnames(changed) <- c(colnames(startdata))
-changed$date <- as.Date(changed$date, format = "%B %d")
-index <- round((changed$date - as.Date("2020-09-06"))/7)
-changed <- cbind(changed,index)
+colnames(changed) <- c("county","status1","changedate1")
 
-# bind the two together
-schooldata <- rbind(startdata, changed)
-rownames(schooldata) <- c()
-schooldata <- group_by(schooldata, county)
+# find changedate
+schooldata <- merge(schooldata, changed, by = "county", all.x = TRUE)
+colnames(schooldata) <- c("county", "startstatus", "t", "tweek", "startdate", "changestatus", "changedate")
+
 
 # set statuses to numbers, 1 being least restrictive, 5 being the most
-schooldata <- mutate(schooldata, status = case_when(
-  status == "Fully Remote" ~ 1,
-  status == "Partial Hybrid" ~ 2,
-  status == "All Hybrid" ~ 3,
-  status == "Partial in Person" ~ 4,
-  status == "In Person" ~ 5)
+schooldata <- mutate(schooldata, startstatus = case_when(
+  startstatus == "Fully Remote" ~ 1,
+  startstatus == "Partial Hybrid" ~ 2,
+  startstatus == "All Hybrid" ~ 3,
+  startstatus == "Partial in Person" ~ 4,
+  startstatus == "In Person" ~ 5)
+)
+
+schooldata <- mutate(schooldata, changestatus = case_when(
+  changestatus == "Fully Remote" ~ 1,
+  changestatus == "Partial Hybrid" ~ 2,
+  changestatus == "All Hybrid" ~ 3,
+  changestatus == "Partial in Person" ~ 4,
+  changestatus == "In Person" ~ 5)
 )
 
 #seven-day rolling average
@@ -41,7 +54,7 @@ averages <- nytdata %>%
   dplyr::mutate(cases_7 = zoo::rollmean(cases, k = 7, fill = NA),
                 deaths_7 = zoo::rollmean(deaths, k = 7, fill = NA)) %>% 
   dplyr::ungroup()
-averages <- averages[averages["date"] >= "2020-09-06", ]
+averages <- averages[averages["date"] >= startdate, ]
 averages <- group_by(averages, week = cut(date, "week"))
 weekdays <- weekdays(averages$date)
 averages <- cbind(averages, weekdays)
@@ -50,7 +63,7 @@ rownames(averages) <- c()
 # now you have the weekly seven-day averages
 
 remote <- ifelse(schooldata$status == 1,1,0)
-schooldata <- cbind(schooldata, remote)
-colnames(schooldata) <- c("county", "state", "status", "index", "remote")
+# schooldata <- cbind(schooldata, remote)
+colnames(schooldata) <- c("county", "status", "status_date", "t", "remote")
 
 #bind the two together
