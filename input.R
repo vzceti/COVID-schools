@@ -5,7 +5,6 @@ colnames(schooldata) <- c("divnum", "county", "date", "startstatus", "specifics"
 schooldata$date <- as.Date(schooldata$date, format = "%B %d")
 startdata <- subset(schooldata, date == "2020-09-08", -c(1,3,5,6))
 rownames(startdata) <- c()
-#start dates
 
 # tiny dataset for cartesian join
 t <- c(0:40)
@@ -25,8 +24,7 @@ colnames(changed) <- c("county","status1","changedate1")
 
 # find changedate
 schooldata <- merge(schooldata, changed, by = "county", all.x = TRUE)
-colnames(schooldata) <- c("county", "startstatus", "t", "tweek", "startdate", "changestatus", "changedate")
-
+colnames(schooldata) <- c("county", "startstatus", "t", "tweek", "startdate", "status1", "date1")
 
 # set statuses to numbers, 1 being least restrictive, 5 being the most
 schooldata <- mutate(schooldata, startstatus = case_when(
@@ -37,13 +35,20 @@ schooldata <- mutate(schooldata, startstatus = case_when(
   startstatus == "In Person" ~ 5)
 )
 
-schooldata <- mutate(schooldata, changestatus = case_when(
-  changestatus == "Fully Remote" ~ 1,
-  changestatus == "Partial Hybrid" ~ 2,
-  changestatus == "All Hybrid" ~ 3,
-  changestatus == "Partial in Person" ~ 4,
-  changestatus == "In Person" ~ 5)
+schooldata <- mutate(schooldata, status1 = case_when(
+  status1 == "Fully Remote" ~ 1,
+  status1 == "Partial Hybrid" ~ 2,
+  status1 == "All Hybrid" ~ 3,
+  status1 == "Partial in Person" ~ 4,
+  status1 == "In Person" ~ 5)
 )
+
+outcome <- rep(0, length(schooldata$county))
+outcome <- ifelse(schooldata$date1>schooldata$tweek, 1, 0)
+outcome[is.na(outcome)] <- 0
+
+schooldata <- cbind(schooldata,outcome)
+schooldata <- schooldata[order(schooldata$county, schooldata$tweek),]
 
 #seven-day rolling average
 nytdata <- read_csv(url(nytlink))
@@ -61,9 +66,3 @@ averages <- cbind(averages, weekdays)
 averages <- subset(averages, weekdays == "Sunday", -c(3,4,7,8))
 rownames(averages) <- c()
 # now you have the weekly seven-day averages
-
-remote <- ifelse(schooldata$status == 1,1,0)
-# schooldata <- cbind(schooldata, remote)
-colnames(schooldata) <- c("county", "status", "status_date", "t", "remote")
-
-#bind the two together
