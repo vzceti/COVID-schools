@@ -1,12 +1,14 @@
 # THUS BEGINS data cleaning and data wrangling... let's get this bread
+# read in start statuses for each school district (VDOE)
 schooldata <- read.csv(inputdata)
-startdate <- "2020-08-30"
 colnames(schooldata) <- c("divnum", "county", "date", "startstatus", "specifics", "membership")
 schooldata$date <- as.Date(schooldata$date, format = "%B %d")
 startdata <- subset(schooldata, date == "2020-09-08", -c(1,3,5,6))
 rownames(startdata) <- c()
 
 # tiny dataset for cartesian join
+# set start date, number of weeks, and days of the week - then merge
+startdate <- "2020-08-30"
 t <- c(0:40)
 dates <- c(as.Date(startdate)+c(7*(0:40)))
 startweek <- rep(startdate,length(t))
@@ -18,11 +20,13 @@ tiny$dates <- as.Date(tiny$dates)
 schooldata <- merge(startdata,tiny,all=TRUE)
 
 # change of status date
+# read in manufactured dataset, create index for change dates
+# set change date for each school
 changed <- read_excel(changes)
 changed <- changed[-c(2,5,6)]
 colnames(changed) <- c("county","status1","changedate1")
-
-# find changedate
+index1 <- round((as.Date(changed$changedate1) - (as.Date("2020-09-06")))/7)
+changed <- cbind(changed, index1)
 schooldata <- merge(schooldata, changed, by = "county", all.x = TRUE)
 colnames(schooldata) <- c("county", "startstatus", "t", "tweek", "startdate", "status1", "date1")
 
@@ -43,14 +47,17 @@ schooldata <- mutate(schooldata, status1 = case_when(
   status1 == "In Person" ~ 5)
 )
 
+# add column for binary outcomes (if it changes, if it goes to remote)
 outcome <- rep(0, length(schooldata$county))
 outcome <- ifelse(schooldata$date1>schooldata$tweek, 1, 0)
 outcome[is.na(outcome)] <- 0
-
 schooldata <- cbind(schooldata,outcome)
 schooldata <- schooldata[order(schooldata$county, schooldata$tweek),]
+remote <- as.data.frame(ifelse(schooldata$status == 1,1,0))
+colnames(remote) <- "remote"
+schooldata <- cbind(schooldata, remote)
 
-#seven-day rolling average
+#seven-day rolling average for cases and deaths
 nytdata <- read_csv(url(nytlink))
 nytdata <- subset(nytdata, state == "Virginia",-c(3,4))
 averages <- nytdata %>%
@@ -62,7 +69,14 @@ averages <- nytdata %>%
 averages <- averages[averages["date"] >= startdate, ]
 averages <- group_by(averages, week = cut(date, "week"))
 weekdays <- weekdays(averages$date)
+weekdays <- as.data.frame(weekdays)
+colnames(weekdays) <- "weekdays"
 averages <- cbind(averages, weekdays)
 averages <- subset(averages, weekdays == "Sunday", -c(3,4,7,8))
 rownames(averages) <- c()
-# now you have the weekly seven-day averages
+
+# averages <- averages[averages$county != "Emporia city"&
+#                            averages$county != "James City" & 
+#                            averages$county != "Fairfax city",]
+# schooldata <- schooldata[schooldata$county != "West Point" & 
+#                            schooldata$county != "Colonial Beach",]
