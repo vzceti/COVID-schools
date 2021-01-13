@@ -2,6 +2,11 @@
 # read in start statuses for each school district (VDOE)
 schooldata <- read.csv(inputdata)
 colnames(schooldata) <- c("divnum", "county", "date", "startstatus", "specifics", "membership")
+schooldata <- mutate(schooldata, date = case_when(
+  date == "September 8" ~ as.Date("2020-09-08"),
+  date == "September 22" ~ as.Date("2020-09-22"),
+  date == "November 12" ~ as.Date("2020-09-22"),
+))
 schooldata$date <- as.Date(schooldata$date, format = "%B %d")
 startdata <- subset(schooldata, date == "2020-09-08", -c(1,3,5,6))
 rownames(startdata) <- c()
@@ -29,6 +34,7 @@ index1 <- round((as.Date(changed$changedate1) - (as.Date("2020-09-06")))/7)
 changed <- cbind(changed, index1)
 schooldata <- merge(schooldata, changed, by = "county", all.x = TRUE)
 colnames(schooldata) <- c("county", "startstatus", "t", "tweek", "startdate", "status1", "date1")
+schooldata$status1[is.na(schooldata$status1)] <- schooldata$startstatus
 
 # set statuses to numbers, 1 being least restrictive, 5 being the most
 schooldata <- mutate(schooldata, startstatus = case_when(
@@ -55,6 +61,7 @@ schooldata <- cbind(schooldata,outcome)
 schooldata <- schooldata[order(schooldata$county, schooldata$tweek),]
 remote <- as.data.frame(ifelse(schooldata$status == 1,1,0))
 colnames(remote) <- "remote"
+remote[is.na(remote)] <- 0
 schooldata <- cbind(schooldata, remote)
 
 #seven-day rolling average for cases and deaths
@@ -75,8 +82,21 @@ averages <- cbind(averages, weekdays)
 averages <- subset(averages, weekdays == "Sunday", -c(3,4,7,8))
 rownames(averages) <- c()
 
-# averages <- averages[averages$county != "Emporia city"&
-#                            averages$county != "James City" & 
-#                            averages$county != "Fairfax city",]
-# schooldata <- schooldata[schooldata$county != "West Point" & 
-#                            schooldata$county != "Colonial Beach",]
+# clean the data on the NYT side, fix its county names, and bind to schooldata
+averages <- averages[averages$county != "Emporia city"&
+                          averages$county != "James City" & 
+                          averages$county != "Fairfax city",]
+schooldata <- schooldata[schooldata$county != "West Point" &
+                          schooldata$county != "Colonial Beach",]
+averagelevels <- sort(unique(averages$county))
+schoollevels <- sort(unique(schooldata$county))
+tiny <- as.data.frame(c(1:(nrow(averages)/130)))
+schoollevels <- merge(schoollevels,tiny)
+schoollevels <- schoollevels[-2]
+schoollevels <- sort(schoollevels$x)
+averages$county <- sort(averages$county)
+averages <- cbind(averages, schoollevels)
+averages <- averages[-2]
+colnames(averages) <- c("tweek","case_avg","death_avg", "county")
+schooldata <- full_join(schooldata, averages, by = c("tweek","county"))
+schooldata <- schooldata[-8]
