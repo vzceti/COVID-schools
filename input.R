@@ -30,11 +30,19 @@ schooldata <- merge(startdata,tiny,all=TRUE)
 changed <- read_excel(changes)
 changed <- changed[-c(2,5,6)]
 colnames(changed) <- c("county","status1","changedate1")
-index1 <- round((as.Date(changed$changedate1) - (as.Date("2020-09-06")))/7)
-changed <- cbind(changed, index1)
+# index1 <- round((as.Date(changed$changedate1) - (as.Date("2020-09-06")))/7)
+# changed <- cbind(changed, index1)
 schooldata <- merge(schooldata, changed, by = "county", all.x = TRUE)
-colnames(schooldata) <- c("county", "startstatus", "t", "tweek", "startdate", "status1", "date1")
-schooldata$status1[is.na(schooldata$status1)] <- schooldata$startstatus
+
+#set second change date
+changed1 <- read.csv(changes1)
+changed1 <- changed1[-c(2,3,6,7,8,9,10)]
+colnames(changed) <- c("county","status2","changedate2")
+# index2 <- round((as.Date(changed1$changedate2) - (as.Date("2020-09-06")))/7)
+# changed1 <- cbind(changed1, index2)
+schooldata <- merge(schooldata, changed1, by = "county", all.x = TRUE)
+colnames(schooldata) <- c("county", "startstatus", "t", "tweek", "startdate", 
+                          "status1", "date1","status2", "date2")
 
 # set statuses to numbers, 1 being least restrictive, 5 being the most
 schooldata <- mutate(schooldata, startstatus = case_when(
@@ -51,6 +59,15 @@ schooldata <- mutate(schooldata, status1 = case_when(
   status1 == "All Hybrid" ~ 3,
   status1 == "Partial in Person" ~ 4,
   status1 == "In Person" ~ 5)
+)
+
+# set statuses to numbers, 1 being least restrictive, 5 being the most
+schooldata <- mutate(schooldata, status2 = case_when(
+  status2 == "Fully Remote" ~ 1,
+  status2 == "Partial Hybrid" ~ 2,
+  status2 == "All Hybrid" ~ 3,
+  status2 == "Partial in Person" ~ 4,
+  status2 == "In Person" ~ 5)
 )
 
 # add column for binary outcomes (if it changes, if it goes to remote)
@@ -82,7 +99,6 @@ averages <- cbind(averages, weekdays)
 averages <- subset(averages, weekdays == "Sunday", -c(3,4,7,8))
 rownames(averages) <- c()
 
-# clean the data on the NYT side, fix its county names, and bind to schooldata
 averages <- averages[averages$county != "Emporia city"&
                           averages$county != "James City" & 
                           averages$county != "Fairfax city",]
