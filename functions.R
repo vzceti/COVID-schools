@@ -64,3 +64,88 @@ renameknots <- function(input){
 renamespikes <- function(input){
   paste("t_spk_", input, sep="")
 }
+
+rankfunc <- function(data, years) {
+  p <- Event_Modeling_Rank(
+    input = data,
+    models = "logit",
+    train_year = years,
+    Target.name = Target.name,
+    feature.names = feature.names
+  )
+  return(p)
+}
+
+
+Event_Modeling_Rank <- function(input, models, train_year, Target.name, feature.names) {
+  if ("logit" == models) {
+    input_train <- input[lubridate::year(input$open_date) == training_period_start | lubridate::year(input$open_date) == training_period_end ,]
+    # Logistic Regression # Modeling
+    logit_18 <- glm(data = input_train,na.action = na.omit,
+                    as.formula(paste(paste(Target.name, "~ "),paste(feature.names, collapse = " + "),sep = "")),
+                    family = "binomial"
+    )
+    logit_18_step <- stepAIC(logit_18 , direction = "forward")
+    
+    print(summary(logit_18_step))
+    # Predicting
+    predict_logit <-logistic(predict(logit_18_step, newdata = input))
+    return(predict_logit)
+  }
+} 
+
+
+deciles <- function(data) {
+  print(head(data_engineered))
+  data <- as.data.table(data)
+  for(i in seq(0.01,0.10,by = 0.01)){
+    data[pred_logit >= i-0.01 & pred_logit < i , risk_grp := 100*i]
+  }
+  data[pred_logit >= 0.09 , risk_grp:= 10]}
+
+
+twentiles <- function(data) {
+  # This script uses the rank ordering model to get the risk twentiles and return a renamed p_co_18m
+  #
+  # args:
+  #  data - the dataset with rank ordering model predictions
+  #
+  # returns:
+  #  data - a new data frame with the predicted values and respective twentiles
+  
+  print(head(data_engineered))
+  # Building Risk Twentiles ----
+  data <- as.data.table(data)
+  for(i in seq(0.01,0.19,by = 0.01)){
+    data[pred_logit >= i-0.01 & pred_logit < i , risk_grp := 100*i]
+  }
+  data[pred_logit >= 0.19 , risk_grp:= 20]
+  
+  # rename pred_logit to p_co_18m ----  
+  data <- data %>% 
+    rename(!!p.rank.name:=pred_logit)
+  data
+}
+
+deciles <- function(data) {
+  # This script uses the rank ordering model to get the risk deciles and return a renamed p_co_18m
+  #
+  # args:
+  #  data - the dataset with rank ordering model predictions
+  #
+  # returns:
+  #  data - a new data frame with the predicted values and respective deciles
+  
+  print(head(data_engineered))
+  # Building Risk Deciles ----
+  data <- as.data.table(data)
+  for(i in seq(0.01,0.10,by = 0.01)){
+    data[pred_logit >= i-0.01 & pred_logit < i , risk_grp := 100*i]
+  }
+  data[pred_logit >= 0.09 , risk_grp:= 10]
+  
+  # rename pred_logit to p_co_18m ----  
+  data <- data %>% 
+    rename(!!p.rank.name:=pred_logit)
+  data
+}
