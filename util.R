@@ -4,7 +4,7 @@ a <- Sys.time()
 source("functions.R")
 
 requireLibs(c("tidyverse","readr","tidyr","dplyr","reshape2",
-              "plyr","zoo","readxl"))
+              "plyr","zoo","readxl","pROC"))
 
 changes <- "changedates.xlsx"
 changes1 <- "changedates1.csv"
@@ -13,14 +13,10 @@ state <- "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-stat
 
 source("fe.R")
 
-rm(list=setdiff(ls(), c("a", "schooldata")))
+source("ranking.R")
 
-#source("ranking.R")
 # write.csv(schooldata, "output.csv")
+# rm(list=setdiff(ls(), c("a", "schooldata")))
 
 a <- Sys.time()-a
 a
-
-#comparing my code to Molly's: input is simple, is input2 actually feature engineering
-#next step: rank ordering model? only one variable
-#next step: 
