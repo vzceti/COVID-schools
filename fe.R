@@ -155,8 +155,5 @@ names(cases) <- c("dates","frequency")
 cases <- cbind(cases,c(1:length(cases$dates)))
 names(cases) <- c("dates","frequency","t")
 
-
-# view(schooldata)
-# ggplot(cases, aes(x=t, y=frequency)) + geom_point()
-
-#probability of school districts going remote over time
+view(schooldata)
+plot <- ggplot(cases, aes(x=t, y=frequency)) + geom_point()
