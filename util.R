@@ -5,12 +5,6 @@ source("functions.R")
 
 requireLibs(c("tidyverse","readr","tidyr","dplyr","reshape2",
               "plyr","zoo","readxl","pROC"))
-
-changes <- "changedates.xlsx"
-changes1 <- "changedates1.csv"
-nytlink <- "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv"
-state <- "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv"
-
 source("fe.R")
 
 source("ranking.R")
