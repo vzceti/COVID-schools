@@ -1,7 +1,13 @@
-changed <- read_excel(changes)
+changes <- "https://raw.githubusercontent.com/vzceti/COVID-schools/main/changedates.csv"
+changes1 <- "https://raw.githubusercontent.com/vzceti/COVID-schools/main/changedates1.csv"
+nytlink <- "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv"
+state <- "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv"
+
+changed <- read.csv(changes)
 changed <- changed[-c(2,5,6)]
 changed1 <- read.csv(changes1)
 changed1 <- changed1[-c(6:10)]
+colnames(changed) <- c("county", "november","date")
 changed <- merge(changed1, changed, by = "county", all.x = TRUE)
 changed <- changed[-6]
 rm("changed1")
@@ -10,7 +16,7 @@ changed <- changed[,c(1:4,6,5)]
 changed$date2 <- as.Date(changed$date2,"%m/%d/%Y")
 startdate <- "2020-08-30"
 
-absent <- read.csv("absent.csv")
+absent <- read.csv("https://raw.githubusercontent.com/vzceti/COVID-schools/main/absent.csv")
 absent <- absent[-c(1,3:5,7:8)]
 colnames(absent) <- c("county","absent_rate")
 absent <- aggregate(absent$absent_rate,by=list(absent$county), FUN=mean)
@@ -18,7 +24,7 @@ absent <- absent[-c(28,126),]
 rownames(absent) <- c()
 colnames(absent) <- c("county","absent_rate")
 
-dropout <- read.csv("dropout.csv")
+dropout <- read.csv("https://raw.githubusercontent.com/vzceti/COVID-schools/main/dropout.csv")
 dropout <- dropout[-c(1,3:7)]
 colnames(dropout) <- c("county","dropout_rate")
 dropout$dropout_rate <- as.numeric(dropout$dropout_rate)
@@ -28,20 +34,20 @@ colnames(dropout) <- c("county","dropout_rate")
 newrow <- c("Lexington",NA)
 dropout <- rbind(dropout[1:67,],newrow,dropout[-(1:67),])
 
-enrollment <- read.csv("enrollment.csv")
+enrollment <- read.csv("https://raw.githubusercontent.com/vzceti/COVID-schools/main/enrollment.csv")
 enrollment <- enrollment[-c(1:2,4)]
 colnames(enrollment) <- c("county","number")
 enrollment <- aggregate(enrollment$number,by=list(enrollment$county), FUN=sum)
 enrollment <- enrollment[-c(28,35,124,128),]
 colnames(enrollment) <- c("county","enrollment")
 
-spending <- read.csv("spending.csv")
+spending <- read.csv("https://raw.githubusercontent.com/vzceti/COVID-schools/main/spending.csv")
 spending <- spending[-c(1,2)]
 spending <- spending[-c(28,125),]
 newrow <- c("Lynchburg",rep(NA,ncol(spending)-1))
 spending <- rbind(spending[1:71,],newrow,spending[-(1:71),])
 
-expenditures <- read.csv("expenditures.csv")
+expenditures <- read.csv("https://raw.githubusercontent.com/vzceti/COVID-schools/main/expenditures.csv")
 expenditures <- expenditures[-c(1,3)]
 colnames(expenditures) <- c("county", "expenditures")
 expenditures <- expenditures[-c(28,126),]
@@ -134,7 +140,7 @@ schooldata$outcomes <- ifelse((schooldata$startstatus >= 1
 schooldata$changedate <- ifelse(schooldata$outcomes ==1 & 
                       schooldata$status2<schooldata$status1, 
                       schooldata$date2, schooldata$date1)
-schooldata$changedate <- as.Date(schooldata$changedate)
+schooldata$changedate <- as.Date(as.numeric(schooldata$changedate))
 schooldata$outcomes <- ifelse(!is.na(schooldata$changedate)&
                               schooldata$changedate>schooldata$date,
                               0, 1)
