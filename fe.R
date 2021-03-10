@@ -51,13 +51,26 @@ expenditures <- read.csv("https://raw.githubusercontent.com/vzceti/COVID-schools
 expenditures <- expenditures[-c(1,3)]
 colnames(expenditures) <- c("county", "expenditures")
 expenditures <- expenditures[-c(28,126),]
+trump <- read.csv("https://raw.githubusercontent.com/vzceti/COVID-schools/main/result.csv")
+trump <- trump[-c(2:8)]
+trump <- subset(trump, trump[3]=="Republican")
+rownames(trump) <- c()
+colnames(trump) <- c("county", "trump")
+trump <- trump[-c(36,38,64),]
 
-changed <- cbind(changed,absent,dropout,enrollment,spending,expenditures)
-changed <- changed[-c(7,9,11,13,15:17,20,21:26)]
+pop <- read.csv("https://raw.githubusercontent.com/vzceti/COVID-schools/main/population.csv")
+pop <- pop[-c(2,3,5,6)]
+pop <- pop[-c(127),]
+rownames(pop) <- c()
+colnames(pop) <- c("county", "pop_dens")
+
+changed <- cbind(changed,absent,dropout,enrollment,spending,expenditures,trump,pop)
+changed <- changed[-c(7,9,11,13,15:17,20,21:26,28,30,31)]
 colnames(changed) <- c("county","startstatus","status1","status2","date1","date2",
                        "absent_rate","dropout_rate","enrollment","daily_atten",
-                       "expend_federal","expend_state","expenditures")
-rm("absent","dropout","enrollment","expenditures","spending")
+                       "expend_federal","expend_state","expenditures","trump","pop")
+rm("absent","dropout","enrollment","expenditures","spending","pop")
+changed$trump <- as.numeric(gsub("[\\%,]", "", changed$trump))
 
 state <- read_csv(url(state))
 state <- subset(state, state == "Virginia")
@@ -133,8 +146,8 @@ schooldata <- full_join(schooldata, averages, by = c("date","county"))
 
 schooldata <- cbind(schooldata, as.data.frame(rep(0, length(schooldata$county))),
                     as.data.frame(rep(0, length(schooldata$county))))
-names(schooldata)[20] <- "outcomes"
-names(schooldata)[21] <- "changedate"
+names(schooldata)[23] <- "outcomes"
+names(schooldata)[24] <- "changedate"
 schooldata$outcomes <- ifelse((schooldata$startstatus >= 1 
                     & (schooldata$status1 == 1|schooldata$status2 == 1)),1,0)
 schooldata$changedate <- ifelse(schooldata$outcomes ==1 & 
@@ -144,22 +157,33 @@ schooldata$changedate <- as.Date(as.numeric(schooldata$changedate))
 schooldata$outcomes <- ifelse(!is.na(schooldata$changedate)&
                               schooldata$changedate>schooldata$date,
                               0, 1)
-schooldata <- subset(schooldata,!(schooldata$startstatus == 1 
-                    & schooldata$status1 == 1
-                    & schooldata$status2 == 1))
-schooldata <- cbind(schooldata, as.data.frame(rep(0, length(schooldata$county))))
-names(schooldata)[22] <- "filter"
-schooldata$filter <- (schooldata$changedate + 7)
-schooldata$filter <- ifelse(!is.na(schooldata$filter)&
-                                schooldata$filter>schooldata$date,
-                              0, 1)
-schooldata <- subset(schooldata, !(schooldata$filter ==1))
-schooldata <- schooldata[-23]
 
-cases <- as.data.frame(table(schooldata$date))
+plotdata <- subset(schooldata,!(schooldata$startstatus == 1
+                                & schooldata$status1 == 1
+                                & schooldata$status2 == 1))
+plotdata <- cbind(plotdata, as.data.frame(rep(0, length(plotdata$county))))
+names(plotdata)[25] <- "filter"
+plotdata$filter <- (plotdata$changedate + 7)
+plotdata$filter <- ifelse(!is.na(plotdata$filter)&
+                            plotdata$filter>plotdata$date,
+                          0, 1)
+plotdata <- subset(plotdata, !(plotdata$filter ==1))
+
+cases <- as.data.frame(table(plotdata$date))
 names(cases) <- c("dates","frequency")
 cases <- cbind(cases,c(1:length(cases$dates)))
 names(cases) <- c("dates","frequency","t")
 
-view(schooldata)
-plot <- ggplot(cases, aes(x=t, y=frequency)) + geom_point()
+plot <- ggplot(cases, aes(x=t, y=(frequency/130))) + geom_point()
+plot
+
+schooldata <- cbind(schooldata, as.data.frame(rep(0, length(schooldata$county))))
+names(schooldata)[25] <- "filter"
+schooldata$filter <- (schooldata$changedate + 7)
+schooldata$filter <- ifelse(!is.na(schooldata$filter)&
+                                schooldata$filter>schooldata$date,
+                              0, 1)
+
+rm(list = c("averages","cases","nytdata","plotdata","state", "tiny", "weekdays",
+     "averagelevels","changedate","changes","changes1","date","newrow",
+     "nytlink","schoollevels","startdate","startweek","t","trump"))
