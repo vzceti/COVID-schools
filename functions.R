@@ -96,7 +96,7 @@ Event_Modeling_Rank <- function(input, models, train_year, Target.name, feature.
 
 
 deciles <- function(data) {
-  print(head(data_engineered))
+  print(head(schooldata))
   data <- as.data.table(data)
   for(i in seq(0.01,0.10,by = 0.01)){
     data[pred_logit >= i-0.01 & pred_logit < i , risk_grp := 100*i]
@@ -104,47 +104,26 @@ deciles <- function(data) {
   data[pred_logit >= 0.09 , risk_grp:= 10]}
 
 
-twentiles <- function(data) {
-  # This script uses the rank ordering model to get the risk twentiles and return a renamed p_co_18m
-  #
-  # args:
-  #  data - the dataset with rank ordering model predictions
-  #
-  # returns:
-  #  data - a new data frame with the predicted values and respective twentiles
-  
-  print(head(data_engineered))
-  # Building Risk Twentiles ----
+twentiles <- function(data) {  
+  print(head(schooldata))
   data <- as.data.table(data)
   for(i in seq(0.01,0.19,by = 0.01)){
     data[pred_logit >= i-0.01 & pred_logit < i , risk_grp := 100*i]
   }
   data[pred_logit >= 0.19 , risk_grp:= 20]
-  
-  # rename pred_logit to p_co_18m ----  
   data <- data %>% 
     rename(!!p.rank.name:=pred_logit)
   data
 }
 
-deciles <- function(data) {
-  # This script uses the rank ordering model to get the risk deciles and return a renamed p_co_18m
-  #
-  # args:
-  #  data - the dataset with rank ordering model predictions
-  #
-  # returns:
-  #  data - a new data frame with the predicted values and respective deciles
-  
-  print(head(data_engineered))
-  # Building Risk Deciles ----
+deciles <- function(data) {  
+  print(head(schooldata))
   data <- as.data.table(data)
   for(i in seq(0.01,0.10,by = 0.01)){
     data[pred_logit >= i-0.01 & pred_logit < i , risk_grp := 100*i]
   }
   data[pred_logit >= 0.09 , risk_grp:= 10]
   
-  # rename pred_logit to p_co_18m ----  
   data <- data %>% 
     rename(!!p.rank.name:=pred_logit)
   data
