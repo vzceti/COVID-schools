@@ -1,28 +1,23 @@
-csbDf <- knotsAndSpikes(t_start = 0, t_end = 40, knots = c(10,20,23), spikes = 19)
+input_start <- schooldata[which(schooldata$t == 0),]
+schooldata$changedate <- as.Date(as.numeric(schooldata$changedate))
 
-input_start <- schooldata[which(schooldata$t == 20 ),]
+schooldata$expend_federal <- as.numeric(schooldata$expend_federal)
+schooldata$expend_state <- as.numeric(schooldata$expend_state)
+schooldata$unemployed <- as.numeric(schooldata$unemployed)
+schooldata$daily_atten <- as.numeric(schooldata$daily_atten)
+schooldata$dropout_rate <- as.numeric(schooldata$dropout_rate)
+schooldata$changedate <- as.numeric(schooldata$changedate)
 
-fit_start <- glm(status2 ~ trump + pop + case_avg + s_cases,
+fit_start <- glm(startstatus ~ expenditures + case_avg + trump + pop,
                  data=input_start, family='gaussian')
-
 summary(fit_start)
-# 
-# scoring_data_strip$p_fail <- predict(fit_fail, newdata=scoring_data_strip, type='response')
-# 
-# input_retire <- scoring_data_strip[which(  scoring_data_strip$failure_event == 0 & scoring_data_strip$t <= 36
-#                                            & scoring_data_strip$TRAINING == 1),]
-# 
-# fit_retire <- glm(retired_event ~    t_csb_8 +  t_csb_22 +  t_csb_35 +
-#                     HGST + TOSHIBA + WEST_DIGIT + LT_1TB + LT_3TB + LT_5TB + LT_9TB + LT_12TB + 
-#                     YR_2016 + YR_2017 + YR_2018 + smart_1_normalized, data=input_retire, family='binomial')
-# 
-# summary(fit_retire)
-# 
-# rm(input_retire)
-# 
-# scoring_data_strip$p_retire <- predict(fit_retire, newdata=scoring_data_strip, type='response')
-# rm(fit_retire)
-# 
-# DBI::dbWriteTable(db,"SCORES_ALL",scoring_data_strip, overwrite = T, temporary = F)
-# 
-# rm(scoring_data_strip)
+
+install.packages("Hmisc")
+library("Hmisc")
+x <- as.matrix(schooldata[c(2:4,13,7,14)])
+cor(x)
+
+install.packages("corrplot")
+library(corrplot)
+corrplot(cor(x), type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
